@@ -162,6 +162,33 @@ namespace IoTPInvoke
             }
         }
 
+        //public string GetValue(string key)
+
+        public string this[string key]
+        {
+            get
+            {
+                IsDisposed();
+                IntPtr value = IoTHubMessage_GetProperty(MessageHandle, key);
+
+                return (value == IntPtr.Zero)
+                    ? null
+                    : Marshal.PtrToStringAnsi(value);
+            }
+            set
+            {
+                IsDisposed();
+                int res = IoTHubMessage_SetProperty(MessageHandle, key, value);
+
+                if (res != 0)
+                    throw new InvalidOperationException("Failed to set message value: " + res.ToString());
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+
         public string MessageId
         {
             get

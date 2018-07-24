@@ -13,7 +13,7 @@ namespace IoTPInvoke
     {
         static void Main(string[] args)
         {
-            int ret;
+            //int ret;
             bool quit = false;
             int counter = 0;
             string connectionString = "<Connection String>";
@@ -53,11 +53,23 @@ namespace IoTPInvoke
                 quit = true;
             };
 
+            int messageNumber = 0;
+
             while (!quit)
             {
                 if (counter++ % 200 == 0)
                 {
-                    conn.SendEvent("This is a test");
+                    //conn.SendEvent("This is a test");
+                    IoTMessage message = new IoTMessage("Message at : " + counter.ToString());
+
+                    message["Number"] = messageNumber++.ToString();
+
+                    string check = message["Number"];
+
+                    if (check != (messageNumber - 1).ToString())
+                        throw new InvalidOperationException("Values do not match");
+
+                    conn.SendEvent(message);
                 }
                 conn.DoWork();
 

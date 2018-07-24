@@ -242,6 +242,39 @@ namespace IoTPInvoke
         public static extern UIntPtr IoTHubMessage_Clone(
             UIntPtr messageHandle);
 
+        /// <summary>
+        /// Retreive the MAP handle for the message properties
+        /// </summary>
+        /// <param name="messageHandle">Handle to the message</param>
+        /// <returns>MAP handle of properties or NULL if failed</returns>
+        /// <remarks>Currently the MAP functions have not been exposed so the MAP handle is useless - WIP</remarks> 
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern UIntPtr IoTHubMessage_Properties(
+            UIntPtr messageHandle);
+
+        /// <summary>
+        /// Set a key/value pair on the message
+        /// </summary>
+        /// <param name="messageHandle">Handle to message</param>
+        /// <param name="key">The key of which to set or reset the value</param>
+        /// <param name="value">The new value</param>
+        /// <returns>Zero if successful</returns>
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int IoTHubMessage_SetProperty(
+            UIntPtr messageHandle,
+            [MarshalAs(UnmanagedType.LPStr)] string key,
+            [MarshalAs(UnmanagedType.LPStr)] string value);
+
+        /// <summary>
+        /// Get the value of the property for the specified key
+        /// </summary>
+        /// <param name="messageHandle">Handle to message</param>
+        /// <param name="key">Key name</param>
+        /// <returns>String pointer</returns>
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr IoTHubMessage_GetProperty(
+            UIntPtr messageHandle,
+            [MarshalAs(UnmanagedType.LPStr)] string key);
 
         /// <summary>
         /// Get the message id
