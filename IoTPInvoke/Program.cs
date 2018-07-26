@@ -16,7 +16,7 @@ namespace IoTPInvoke
             int ret;
             bool quit = false;
             int counter = 0;
-            string connectionString = "HostName=MarkRadHub2.azure-devices.net;DeviceId=TestDevice1;SharedAccessKey=9lbM21JSkEVal2y/y/NfBldWUMKixrBWz/aj3vCLss8=";
+            string connectionString = "<Connection String>";
             string test = Directory.GetCurrentDirectory();
 
             //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP);
