@@ -19,12 +19,18 @@ namespace IoTPInvoke
             string connectionString = "<Connection String>";
             string test = Directory.GetCurrentDirectory();
 
+            //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP);
+            //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP_WebSocket);
+            //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.MQTT);
             IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.MQTT_WebSocket);
+
+            // Callback for message confirmation
             conn.ConfirmationCallback += (o, i) =>
             {
                 Console.WriteLine("Message calback with " + i.ToString());
             };
 
+            // Callback for cloud to device call
             conn.MessageCallback += (o, i) =>
             {
                 string message = i.ReceivedMessage.MessageType == IoTMessage.MessageTypes.String
@@ -35,6 +41,7 @@ namespace IoTPInvoke
                 i.Success = true;
             };
 
+            // Callback for direct method call
             conn.DeviceMethodCallback += (o, i) =>
             {
                 Console.WriteLine("Method = {0}", i.Method);
@@ -68,6 +75,14 @@ namespace IoTPInvoke
 
                     if (check != (messageNumber - 1).ToString())
                         throw new InvalidOperationException("Values do not match");
+
+                    check = message["novalue"];
+
+                    if (check != null)
+                        throw new InvalidOperationException("Unexpected value from nonexistent keyword");
+
+                    message["Name"] = "Mark";
+                    string[] keys = message.GetPropertyKeys();
 
                     conn.SendEvent(message);
                 }

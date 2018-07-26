@@ -133,6 +133,34 @@ namespace IoTPInvoke
             }
         }
 
+        public string[] GetPropertyKeys()
+        {
+            IsDisposed();
+
+            UIntPtr mapHandle = IoTHubMessage_Properties(MessageHandle);
+            IntPtr keys;
+            IntPtr values;
+            int count;
+
+            int res = IoTWrapper.Map_GetInternals(mapHandle, out keys, out values, out count);
+
+            if (res != 0)
+                throw new InvalidOperationException("Failed to acquire message properties: " + res.ToString());
+
+            List<string> keyList = new List<string>(count);
+
+            for (int i = 0; i < count; i++)
+            {
+                IntPtr work = IntPtr.Zero;
+
+                work = Marshal.ReadIntPtr(keys, i * Marshal.SizeOf(work));
+                string key = Marshal.PtrToStringAnsi(work);
+                keyList.Add(key);
+            }
+
+            return keyList.ToArray();
+        }
+
         public UIntPtr MessageHandle
         {
             get
@@ -186,9 +214,8 @@ namespace IoTPInvoke
         }
 
         /// <summary>
-        /// 
+        /// Get or set the message ID
         /// </summary>
-
         public string MessageId
         {
             get

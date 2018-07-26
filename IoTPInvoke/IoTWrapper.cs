@@ -111,6 +111,13 @@ namespace IoTPInvoke
         [DllImport("aziotsharedutil.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int platform_deinit();
 
+        [DllImport("aziotsharedutil.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern int Map_GetInternals(
+            UIntPtr handle,
+            out IntPtr keys,
+            out IntPtr values,
+            out int count);
+
         /// <summary>
         /// Creates a new IoT hub handle
         /// </summary>
