@@ -13,16 +13,19 @@ namespace IoTPInvoke
     {
         static void Main(string[] args)
         {
-            //int ret;
+            int ret;
             bool quit = false;
             int counter = 0;
-            string connectionString = "<Connection String>";
+            string connectionString = "HostName=MarkRadHub2.azure-devices.net;DeviceId=TestDevice1;SharedAccessKey=9lbM21JSkEVal2y/y/NfBldWUMKixrBWz/aj3vCLss8=";
             string test = Directory.GetCurrentDirectory();
 
             //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP);
             //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP_WebSocket);
             //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.MQTT);
             IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.MQTT_WebSocket);
+
+            // Optional - turn on SDK detailed logging with true
+            ret = conn.SetLogging(false);
 
             // Callback for message confirmation
             conn.ConfirmationCallback += (o, i) =>

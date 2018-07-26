@@ -135,12 +135,25 @@ namespace IoTPInvoke
         /// <param name="iotHubClientHandle">IoT Hub handle</param>
         /// <param name="optionName">Must be 'proxy_data'</param>
         /// <param name="proxyData">Pointer to proxy structure (ProxyData)</param>
-        /// <returns>Zero is successful</returns>
+        /// <returns>Zero if successful</returns>
         [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
         public static extern int IoTHubClient_LL_SetOption_Proxy(
             UIntPtr iotHubClientHandle,
             [MarshalAs(UnmanagedType.LPStr)] string optionName,
             ref ProxyData proxyData);
+
+        /// <summary>
+        /// Turn SDK logging on or off
+        /// </summary>
+        /// <param name="iotHubClientHandle">IoT Hub handle</param>
+        /// <param name="optionName">Must be 'logtrace'</param>
+        /// <param name="traceValue">True to turn on logging</param>
+        /// <returns>Zero if successful</returns>
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
+        public static extern int IoTHubClient_LL_SetOption_Logging(
+            UIntPtr iotHubClientHandle,
+            [MarshalAs(UnmanagedType.LPStr)] string optionName,
+            ref bool traceValue);
 
         /// <summary>
         /// Send a message to the IoT hub

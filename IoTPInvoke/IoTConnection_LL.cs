@@ -28,6 +28,7 @@ namespace IoTPInvoke
         }
 
         public const string OPTION_HTTP_PROXY = "proxy_data";
+        public const string OPTION_LOG_TRACE = "logtrace";
 
         public event EventHandler<ConfirmationCallbackEventArgs> ConfirmationCallback;
         public event EventHandler<MessageCallbackArgs> MessageCallback;
@@ -76,6 +77,11 @@ namespace IoTPInvoke
             };
 
             return IoTHubClient_LL_SetOption_Proxy(_iotHandle, OPTION_HTTP_PROXY, ref proxyData);
+        }
+
+        public int SetLogging(bool traceValue)
+        {
+            return IoTHubClient_LL_SetOption_Logging(_iotHandle, OPTION_LOG_TRACE, ref traceValue);
         }
 
         public int SendEvent(string message)
