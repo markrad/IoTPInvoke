@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,6 +19,9 @@ namespace IoTPInvoke
             int counter = 0;
             string connectionString = "<Connection String>";
             string test = Directory.GetCurrentDirectory();
+
+            // Create my reported device twin
+            JObject twin = null;
 
             //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP);
             //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP_WebSocket);
@@ -48,9 +52,80 @@ namespace IoTPInvoke
             conn.DeviceMethodCallback += (o, i) =>
             {
                 Console.WriteLine("Method = {0}", i.Method);
-                Console.WriteLine("Payload = {0}", Encoding.Default.GetString(i.Payload));
-                i.Response = "{ \"success\": \"true\", \"message\": \"Method complete\"}";
+
+                JObject input = JObject.Parse(Encoding.Default.GetString(i.Payload));
+
+                Console.WriteLine("Payload = \r\n{0}", input.ToString());
+
+                JObject response = new JObject(
+                    new JProperty("success", "true"),
+                    new JProperty("message", "Method complete"));
+
+                i.Response = response.ToString();
                 i.Result = 200;
+            };
+
+            conn.DeviceTwinCallback += (o, i) =>
+            {
+                // A little explanation here. 
+                //
+                // The first time the device connects the hub will send the complete reported and desired JSON document. One can
+                // determine if it is a new connection if the JSON contains a "desired" element. In this instance one would
+                // compare desired to reported, make changes as necessary and report back a status.
+                // 
+                // If the device twin is updated at the hub then an update will be sent. This will consist of the modified 
+                // values. One would update the status and send a new report.
+                //
+                // Note that this code has been simplified to the bare minimum to demonstrate the logic flow.
+                //
+                // See https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-device-twins for further information.
+                JObject payload = JObject.Parse(i.Payload);
+                Console.WriteLine("Update state = {0}", i.UpdateState);
+                Console.WriteLine("Payload = \r\n{0}", payload.ToString());
+
+                try
+                {
+                    bool updateRequired = false;
+
+                    // The first call after connection will be a complete JSON document for desired and reported
+                    if (payload.ContainsKey("desired"))
+                    {
+                        twin = payload;
+
+                        if ((string)payload["desired"]["mark"] != (string)twin["reported"]["mark"])
+                        {
+                            twin["reported"]["mark"] = (string)payload["desired"]["mark"];
+                            twin["reported"]["$version"] = (string)payload["desired"]["$version"];
+                            updateRequired = true;
+                        }
+                    }
+                    else
+                    {
+                        if ((string)payload["mark"] != (string)twin["reported"]["mark"])
+                        {
+                            twin["reported"]["mark"] = (string)payload["mark"];
+                            updateRequired = true;
+                        }
+                    }
+
+                    if (updateRequired)
+                    {
+                        JObject report = new JObject(
+                            new JProperty("mark", twin["reported"]["mark"].ToString()));
+
+                        Console.WriteLine("Reporting \r\n{0}", report.ToString());
+                        conn.SendReportedTwinState(report.ToString());
+                    }
+                }
+                catch (NullReferenceException e)
+                {
+                    Console.WriteLine("Expected JSON element was not found or was wrong data type in twin request");
+                }
+            };
+
+            conn.ReportedStateCallback += (o, i) =>
+            {
+                Console.WriteLine("Twin state callback = {0}", i.StatusCode);
             };
 
             // Optional - use proxy for WebSockets
@@ -93,11 +168,6 @@ namespace IoTPInvoke
 
                 Thread.Sleep(10);
             }
-        }
-
-        private static void Conn_ConfirmationCallback(object sender, ConfirmationCallbackEventArgs e)
-        {
-            throw new NotImplementedException();
         }
     }
 }

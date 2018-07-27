@@ -66,6 +66,9 @@ namespace IoTPInvoke
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int MessageCallback(UIntPtr message, UIntPtr userContextCallback);
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void ReportedStateCallback(int status_code, UIntPtr userContextCallback);
+
         /// <summary>
         /// Function pointer called when a direct message is received
         /// </summary>
@@ -78,6 +81,13 @@ namespace IoTPInvoke
         /// <returns>200 for successful processing</returns>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int DeviceMethodCallback(IntPtr method_name, IntPtr payload, int size, out IntPtr response, out int response_size, UIntPtr userContextCallback);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void DeviceTwinCallback(
+            int update_state,
+            IntPtr payload,
+            int length,
+            UIntPtr userContextCallback);
 
         // Next four functions are protocol specifiers. These are not called directly but passed to the SDK
         // to specify the protocol to use.
@@ -170,6 +180,14 @@ namespace IoTPInvoke
             MessageConfirmationCallback eventConfirmationCallback,
             UIntPtr userContextCallback);
 
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SendReportedState")]
+        public static extern int IoTHubClient_LL_SendReportedState(
+            UIntPtr iotHubClientHandle,
+            [MarshalAs(UnmanagedType.LPStr)] string reportedState,
+            int size, 
+            ReportedStateCallback reportedStateCallback,
+            UIntPtr userContextCallback);
+
         /// <summary>
         /// Set callback for cloud to device message
         /// </summary>
@@ -190,10 +208,23 @@ namespace IoTPInvoke
         /// <param name="deviceMethodCallback">Function to call</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns></returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int IoTHubDeviceClient_LL_SetDeviceMethodCallback(
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetDeviceMethodCallback")]
+        public static extern int IoTHubClient_LL_SetDeviceMethodCallback(
             UIntPtr iotHubClientHandle, 
             DeviceMethodCallback deviceMethodCallback, 
+            UIntPtr userContextCallback);
+
+        /// <summary>
+        /// Specify function to call when a device twin update is received
+        /// </summary>
+        /// <param name="iotHubClientHandle">IoT Hub handle</param>
+        /// <param name="deviceTwinCallback">Function to call</param>
+        /// <param name="userContextCallback">User data</param>
+        /// <returns></returns>
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetDeviceTwinCallback")]
+        public static extern int IoTHubClient_LL_SetDeviceTwinCallback(
+            UIntPtr iotHubClientHandle,
+            DeviceTwinCallback deviceTwinCallback,
             UIntPtr userContextCallback);
 
         /// <summary>

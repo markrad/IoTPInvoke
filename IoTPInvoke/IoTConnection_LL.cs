@@ -33,6 +33,8 @@ namespace IoTPInvoke
         public event EventHandler<ConfirmationCallbackEventArgs> ConfirmationCallback;
         public event EventHandler<MessageCallbackArgs> MessageCallback;
         public event EventHandler<DeviceMethodCallbackArgs> DeviceMethodCallback;
+        public event EventHandler<DeviceTwinCallbackArgs> DeviceTwinCallback;
+        public event EventHandler<ReportedStateCallbackArgs> ReportedStateCallback;
 
         public IoTConnection_LL(string connectionString, Protocols protocol) : 
             this(connectionString, protocol, UIntPtr.Zero)
@@ -63,7 +65,8 @@ namespace IoTPInvoke
             }
 
             ret = IoTHubClient_LL_SetMessageCallback(_iotHandle, messageReceived, userContextCallback);
-            ret = IoTHubDeviceClient_LL_SetDeviceMethodCallback(_iotHandle, deviceMethodReceived, userContextCallback);
+            ret = IoTHubClient_LL_SetDeviceMethodCallback(_iotHandle, deviceMethodReceived, userContextCallback);
+            ret = IoTHubClient_LL_SetDeviceTwinCallback(_iotHandle, deviceTwinCallback, userContextCallback);
         }
 
         public int SetProxy(string proxyName, int proxyPort, string proxyUserid = null, string proxyPassword = null)
@@ -98,6 +101,15 @@ namespace IoTPInvoke
             iotMessage.Dispose();
 
             return ret;
+        }
+        public int SendReportedTwinState(string reportedState)
+        {
+            return SendReportedTwinState(reportedState, UIntPtr.Zero);
+        }
+
+        public int SendReportedTwinState(string reportedState, UIntPtr userContextCallback)
+        {
+            return IoTHubClient_LL_SendReportedState(_iotHandle, reportedState, reportedState.Length, reportedStateCallback, userContextCallback);
         }
 
         public int SendEvent(IoTMessage message)
@@ -162,6 +174,26 @@ namespace IoTPInvoke
             return e.Result;
         }
 
+        protected virtual void OnReportedStateCallback(ReportedStateCallbackArgs e)
+        {
+            EventHandler<ReportedStateCallbackArgs> handler = ReportedStateCallback;
+
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
+        protected virtual void OnDeviceTwinCallback(DeviceTwinCallbackArgs e)
+        {
+            EventHandler<DeviceTwinCallbackArgs> handler = DeviceTwinCallback;
+
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed)
@@ -212,6 +244,21 @@ namespace IoTPInvoke
             return result;
         }
 
+        private void deviceTwinCallback(int update_state, IntPtr payload, int size, UIntPtr userContextCallback)
+        {
+            string strPayload = Marshal.PtrToStringAnsi(payload, size);
+            DeviceTwinCallbackArgs deviceTwinCallbackArgs = new DeviceTwinCallbackArgs(update_state, strPayload, userContextCallback);
+
+            OnDeviceTwinCallback(deviceTwinCallbackArgs);
+        }
+
+        private void reportedStateCallback(int status_code, UIntPtr userContextCallback)
+        {
+            ReportedStateCallbackArgs reportedStateCallbackArgs = new ReportedStateCallbackArgs(status_code, userContextCallback);
+
+            OnReportedStateCallback(reportedStateCallbackArgs);
+        }
+
         private Protocol getProtocolFunction(Protocols protocol)
         {
             switch (protocol)
@@ -229,6 +276,37 @@ namespace IoTPInvoke
                 default:
                     throw new ArgumentException("Invalid protocol", "protocol");
             }
+        }
+    }
+
+    public class ReportedStateCallbackArgs : EventArgs
+    {
+        public int StatusCode { get; private set; }
+        public UIntPtr UserContextCallback { get; private set; }
+        public ReportedStateCallbackArgs(int statusCode, UIntPtr userContextCallback)
+        {
+            StatusCode = statusCode;
+            UserContextCallback = userContextCallback;
+        }
+    }
+
+    public class DeviceTwinCallbackArgs : EventArgs
+    {
+        public enum UpdateStateValue
+        {
+            Complete,
+            Partial,
+        }
+
+        public UpdateStateValue UpdateState { get; private set; }
+        public string Payload { get; private set; }
+        public UIntPtr UserContextCallback { get; private set; }
+
+        public DeviceTwinCallbackArgs(int updateState, string payload, UIntPtr userContextCallback)
+        {
+            UpdateState = (UpdateStateValue)updateState;
+            Payload = payload;
+            UserContextCallback = userContextCallback;
         }
     }
 
