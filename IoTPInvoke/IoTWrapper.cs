@@ -66,6 +66,11 @@ namespace IoTPInvoke
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int MessageCallback(UIntPtr message, UIntPtr userContextCallback);
 
+        /// <summary>
+        /// Function pointer called to report status of a device twin update
+        /// </summary>
+        /// <param name="status_code">Indicates success or failure of update</param>
+        /// <param name="userContextCallback">User data passed when callback was established</param>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void ReportedStateCallback(int status_code, UIntPtr userContextCallback);
 
@@ -82,6 +87,13 @@ namespace IoTPInvoke
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int DeviceMethodCallback(IntPtr method_name, IntPtr payload, int size, out IntPtr response, out int response_size, UIntPtr userContextCallback);
 
+        /// <summary>
+        /// Function pointer called when device twin update is received
+        /// </summary>
+        /// <param name="update_state">State of device twin update</param>
+        /// <param name="payload">JSON with complete JSON document or just the updated value</param>
+        /// <param name="length">Length of above</param>
+        /// <param name="userContextCallback">User data passed when callback was established</param>
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void DeviceTwinCallback(
             int update_state,
@@ -121,6 +133,14 @@ namespace IoTPInvoke
         [DllImport("aziotsharedutil.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int platform_deinit();
 
+        /// <summary>
+        /// Returns all of the keys and values along with a count from a MAP
+        /// </summary>
+        /// <param name="handle">Handle for the MAP</param>
+        /// <param name="keys">Output parameter will address an array of strings containing keys</param>
+        /// <param name="values">Output parameter will address an array of strings containing values</param>
+        /// <param name="count">Output parameter that specifies how many keys are in the MAP</param>
+        /// <returns>Zero if successful</returns>
         [DllImport("aziotsharedutil.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int Map_GetInternals(
             UIntPtr handle,
@@ -180,6 +200,15 @@ namespace IoTPInvoke
             MessageConfirmationCallback eventConfirmationCallback,
             UIntPtr userContextCallback);
 
+        /// <summary>
+        /// Send the reported state of the device to update the device twin
+        /// </summary>
+        /// <param name="iotHubClientHandle">IoT Hub handle</param>
+        /// <param name="reportedState">JSON document containing state</param>
+        /// <param name="size">Length of JSON document</param>
+        /// <param name="reportedStateCallback">Callback called to report update status</param>
+        /// <param name="userContextCallback">User data</param>
+        /// <returns></returns>
         [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SendReportedState")]
         public static extern int IoTHubClient_LL_SendReportedState(
             UIntPtr iotHubClientHandle,
@@ -347,10 +376,21 @@ namespace IoTPInvoke
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string messageId);
 
+        /// <summary>
+        /// Get the message correlation id
+        /// </summary>
+        /// <param name="messageHandle">Message handle</param>
+        /// <returns>Correlation id</returns>
         [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetCorrelationId(
             UIntPtr messageHandle);
 
+        /// <summary>
+        /// Set the message correlation id
+        /// </summary>
+        /// <param name="messageHandle">Message handle</param>
+        /// <param name="correlationId">Required correlation id</param>
+        /// <returns>Zero if successful</returns>
         [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_SetCorrelationId(
             UIntPtr messageHandle,
