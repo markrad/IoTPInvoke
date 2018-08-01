@@ -13,10 +13,17 @@ namespace IoTPInvoke
     /// </summary>
     class IoTConnection_LL : IDisposable
     {
+        // TODO: Add enums for return codes to match those of the C SDK
         private string _connectionString;
         private Protocols _protocol;
         UIntPtr _iotHandle;
         bool _disposed = false;
+
+        private MessageConfirmationCallback _messageConfirmationCallback;
+        private MessageCallback _messageCallback;
+        private ReportedStateCallback _reportedStateCallback;
+        private DeviceMethodCallback _deviceMethodCallback;
+        private DeviceTwinCallback _deviceTwinCallback;
 
         public enum Protocols
         {
@@ -36,17 +43,34 @@ namespace IoTPInvoke
         public event EventHandler<DeviceTwinCallbackArgs> DeviceTwinCallback;
         public event EventHandler<ReportedStateCallbackArgs> ReportedStateCallback;
 
+        /// <summary>
+        /// Create an instance of the IoTConnection_LL object
+        /// </summary>
+        /// <param name="connectionString">Azure IoT device connection string</param>
+        /// <param name="protocol">Required communicaton protocol</param>
         public IoTConnection_LL(string connectionString, Protocols protocol) : 
             this(connectionString, protocol, UIntPtr.Zero)
         {
             
         }
 
+        /// <summary>
+        /// Create an instance of the IoTConnection_LL object
+        /// </summary>
+        /// <param name="connectionString">Azure IoT device connection string</param>
+        /// <param name="protocol">Required communicaton protocol</param>
+        /// <param name="userContextCallback">User data</param>
         public IoTConnection_LL(string connectionString, Protocols protocol, UIntPtr userContextCallback) 
         {
             _connectionString = connectionString;
             _protocol = protocol;
             _iotHandle = UIntPtr.Zero;
+
+            _messageConfirmationCallback = new MessageConfirmationCallback(confirmationCallback);
+            _messageCallback = new MessageCallback(messageReceived);
+            _reportedStateCallback = new ReportedStateCallback(reportedStateCallback);
+            _deviceMethodCallback = new DeviceMethodCallback(deviceMethodReceived);
+            _deviceTwinCallback = new DeviceTwinCallback(deviceTwinCallback);
 
             int ret;
 
@@ -64,13 +88,23 @@ namespace IoTPInvoke
                 throw new InvalidOperationException("Failed to create IoT handle");
             }
 
-            ret = IoTHubClient_LL_SetMessageCallback(_iotHandle, messageReceived, userContextCallback);
-            ret = IoTHubClient_LL_SetDeviceMethodCallback(_iotHandle, deviceMethodReceived, userContextCallback);
-            ret = IoTHubClient_LL_SetDeviceTwinCallback(_iotHandle, deviceTwinCallback, userContextCallback);
+            ret = IoTHubClient_LL_SetMessageCallback(_iotHandle, _messageCallback, userContextCallback);
+            ret = IoTHubClient_LL_SetDeviceMethodCallback(_iotHandle, _deviceMethodCallback, userContextCallback);
+            ret = IoTHubClient_LL_SetDeviceTwinCallback(_iotHandle, _deviceTwinCallback, userContextCallback);
         }
 
+        /// <summary>
+        /// Provide web proxy server information for WebSocket or HTTP connections
+        /// </summary>
+        /// <param name="proxyName">Name or IP address of web proxy</param>
+        /// <param name="proxyPort">Port to use on proxy</param>
+        /// <param name="proxyUserid">Optional proxy user identity</param>
+        /// <param name="proxyPassword">Optional proxy password</param>
+        /// <returns>Zero if successful</returns>
         public int SetProxy(string proxyName, int proxyPort, string proxyUserid = null, string proxyPassword = null)
         {
+            IsDisposed();
+
             ProxyData proxyData = new ProxyData
             {
                 host_address = proxyName,
@@ -82,8 +116,15 @@ namespace IoTPInvoke
             return IoTHubClient_LL_SetOption_Proxy(_iotHandle, OPTION_HTTP_PROXY, ref proxyData);
         }
 
+        /// <summary>
+        /// Turn C SDK logging on or off
+        /// </summary>
+        /// <param name="traceValue">True to turn on logging; false to turn off</param>
+        /// <returns>Zero if successful</returns>
         public int SetLogging(bool traceValue)
         {
+            IsDisposed();
+
             return IoTHubClient_LL_SetOption_Logging(_iotHandle, OPTION_LOG_TRACE, ref traceValue);
         }
 
@@ -102,15 +143,6 @@ namespace IoTPInvoke
 
             return ret;
         }
-        public int SendReportedTwinState(string reportedState)
-        {
-            return SendReportedTwinState(reportedState, UIntPtr.Zero);
-        }
-
-        public int SendReportedTwinState(string reportedState, UIntPtr userContextCallback)
-        {
-            return IoTHubClient_LL_SendReportedState(_iotHandle, reportedState, reportedState.Length, reportedStateCallback, userContextCallback);
-        }
 
         public int SendEvent(IoTMessage message)
         {
@@ -119,16 +151,34 @@ namespace IoTPInvoke
 
         public int SendEvent(IoTMessage message, UIntPtr userContextCallback)
         {
-            return IoTHubClient_LL_SendEventAsync(_iotHandle, message.MessageHandle, eventConfirmationCallback, userContextCallback);
+            IsDisposed();
+
+            return IoTHubClient_LL_SendEventAsync(_iotHandle, message.MessageHandle, _messageConfirmationCallback, userContextCallback);
+        }
+
+        public int SendReportedTwinState(string reportedState)
+        {
+            return SendReportedTwinState(reportedState, UIntPtr.Zero);
+        }
+
+        public int SendReportedTwinState(string reportedState, UIntPtr userContextCallback)
+        {
+            IsDisposed();
+
+            return IoTHubClient_LL_SendReportedState(_iotHandle, reportedState, reportedState.Length, _reportedStateCallback, userContextCallback);
         }
 
         public void DoWork()
         {
+            IsDisposed();
+
             IoTHubClient_LL_DoWork(_iotHandle);
         }
 
         public int Close()
         {
+            IsDisposed();
+
             int ret = IoTWrapper.IoTHubClient_LL_Destroy(_iotHandle);
 
             return ret;
@@ -217,7 +267,14 @@ namespace IoTPInvoke
             Dispose(false);
         }
 
-        private void eventConfirmationCallback(int result, UIntPtr userContextCallback)
+        private void IsDisposed()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException("IoTConnection_LL");
+        }
+
+
+        private void confirmationCallback(int result, UIntPtr userContextCallback)
         {
             OnConfirmationCallback(new ConfirmationCallbackEventArgs(result, userContextCallback));
         }

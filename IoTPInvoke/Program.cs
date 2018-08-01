@@ -12,21 +12,21 @@ namespace IoTPInvoke
 {
     class Program
     {
+        private const string CONNECTIONSTRRING = "<Connection String>";
+
         static void Main(string[] args)
         {
             int ret;
             bool quit = false;
             int counter = 0;
-            string connectionString = "<Connection String>";
-            string test = Directory.GetCurrentDirectory();
 
             // Create my reported device twin
             JObject twin = null;
 
-            //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP);
-            //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.AMQP_WebSocket);
-            //IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.MQTT);
-            IoTConnection_LL conn = new IoTConnection_LL(connectionString, IoTConnection_LL.Protocols.MQTT_WebSocket);
+            //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.AMQP);
+            //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.AMQP_WebSocket);
+            //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.MQTT);
+            IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.MQTT_WebSocket);
 
             // Optional - turn on SDK detailed logging with true
             ret = conn.SetLogging(false);
@@ -119,7 +119,7 @@ namespace IoTPInvoke
                 }
                 catch (NullReferenceException e)
                 {
-                    Console.WriteLine("Expected JSON element was not found or was wrong data type in twin request");
+                    Console.WriteLine("Expected JSON element was not found or was wrong data type in twin request: " + e.Message);
                 }
             };
 
