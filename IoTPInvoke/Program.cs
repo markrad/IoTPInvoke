@@ -13,7 +13,7 @@ namespace IoTPInvoke
 {
     class Program
     {
-        private const string CONNECTIONSTRRING = "<Connection String>";
+        private const string CONNECTIONSTRING = "<Connection String>";
 
         static void Main(string[] args)
         {
