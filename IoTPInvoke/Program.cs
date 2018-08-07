@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -144,23 +145,17 @@ namespace IoTPInvoke
             {
                 if (counter++ % 200 == 0)
                 {
-                    //conn.SendEvent("This is a test");
                     IoTMessage message = new IoTMessage("Message at : " + counter.ToString());
 
                     message["Number"] = messageNumber++.ToString();
 
-                    string check = message["Number"];
-
-                    if (check != (messageNumber - 1).ToString())
-                        throw new InvalidOperationException("Values do not match");
-
-                    check = message["novalue"];
-
-                    if (check != null)
-                        throw new InvalidOperationException("Unexpected value from nonexistent keyword");
+                    Debug.Assert(message["Number"] == (messageNumber - 1).ToString());
+                    Debug.Assert(message["novalue"] == null);
 
                     message["Name"] = "Mark";
                     string[] keys = message.GetPropertyKeys();
+
+                    Debug.Assert(keys.Length == 2 && keys.Contains("Number") && keys.Contains("Name"));
 
                     conn.SendEvent(message);
                 }

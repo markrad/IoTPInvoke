@@ -11,7 +11,7 @@ namespace IoTPInvoke
     /// <summary>
     /// Wraps an Azure connection
     /// </summary>
-    class IoTConnection_LL : IDisposable
+    public class IoTConnection_LL : IDisposable
     {
         // TODO: Add enums for return codes to match those of the C SDK
         private string _connectionString;
@@ -128,11 +128,22 @@ namespace IoTPInvoke
             return IoTHubClient_LL_SetOption_Logging(_iotHandle, OPTION_LOG_TRACE, ref traceValue);
         }
 
+        /// <summary>
+        /// Send string message to IoT hub
+        /// </summary>
+        /// <param name="message">Message content</param>
+        /// <returns>Zero if successful</returns>
         public int SendEvent(string message)
         {
             return SendEvent(message, UIntPtr.Zero);
         }
 
+        /// <summary>
+        /// Send string message to IoT hub
+        /// </summary>
+        /// <param name="message">Message content</param>
+        /// <param name="userContextCallback">User data</param>
+        /// <returns>Zero if successful</returns>
         public int SendEvent(string message, UIntPtr userContextCallback)
         {
             int ret;
@@ -144,11 +155,22 @@ namespace IoTPInvoke
             return ret;
         }
 
+        /// <summary>
+        /// Send an IoT message to the IoT hub
+        /// </summary>
+        /// <param name="message">IoT message wrapper</param>
+        /// <returns>Zero if successful</returns>
         public int SendEvent(IoTMessage message)
         {
             return SendEvent(message, UIntPtr.Zero);
         }
 
+        /// <summary>
+        /// Send an IoT message to the IoT hub
+        /// </summary>
+        /// <param name="message">IoT message wrapper</param>
+        /// <param name="userContextCallback">User data</param>
+        /// <returns>Zero if successful</returns>
         public int SendEvent(IoTMessage message, UIntPtr userContextCallback)
         {
             IsDisposed();
@@ -156,11 +178,22 @@ namespace IoTPInvoke
             return IoTHubClient_LL_SendEventAsync(_iotHandle, message.MessageHandle, _messageConfirmationCallback, userContextCallback);
         }
 
+        /// <summary>
+        /// Send reported twin state to IoT hub
+        /// </summary>
+        /// <param name="reportedState">State as JSON string</param>
+        /// <returns>Zero if successful</returns>
         public int SendReportedTwinState(string reportedState)
         {
             return SendReportedTwinState(reportedState, UIntPtr.Zero);
         }
 
+        /// <summary>
+        /// Send reported twin state to IoT hub
+        /// </summary>
+        /// <param name="reportedState">State as JSON string</param>
+        /// <param name="userContextCallback">User data</param>
+        /// <returns>Zero if successful</returns>
         public int SendReportedTwinState(string reportedState, UIntPtr userContextCallback)
         {
             IsDisposed();
@@ -168,6 +201,10 @@ namespace IoTPInvoke
             return IoTHubClient_LL_SendReportedState(_iotHandle, reportedState, reportedState.Length, _reportedStateCallback, userContextCallback);
         }
 
+        /// <summary>
+        /// Causes the C SDK to send any outstanding messages and receive any data from the IoT hub.
+        /// This function should be called frequently such as about every 10ms.
+        /// </summary>
         public void DoWork()
         {
             IsDisposed();
@@ -175,6 +212,10 @@ namespace IoTPInvoke
             IoTHubClient_LL_DoWork(_iotHandle);
         }
 
+        /// <summary>
+        /// Close the connection to the IoT hub
+        /// </summary>
+        /// <returns>Zero if successful</returns>
         public int Close()
         {
             IsDisposed();
@@ -184,6 +225,9 @@ namespace IoTPInvoke
             return ret;
         }
 
+        /// <summary>
+        /// Recover resource used by this class prior to destruction
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);

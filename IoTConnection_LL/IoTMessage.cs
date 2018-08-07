@@ -13,6 +13,9 @@ namespace IoTPInvoke
     /// </summary>
     public class IoTMessage : IDisposable
     {
+        /// <summary>
+        /// Possible data types in an IoT message
+        /// </summary>
         public enum MessageTypes
         {
             ByteArray,
@@ -190,8 +193,6 @@ namespace IoTPInvoke
             }
         }
 
-        //public string GetValue(string key)
-
         public string this[string key]
         {
             get
@@ -238,6 +239,9 @@ namespace IoTPInvoke
             }
         }
 
+        /// <summary>
+        /// Get or set the correlation ID
+        /// </summary>
         public string CorrelationId
         {
             get
@@ -257,6 +261,24 @@ namespace IoTPInvoke
                 {
                     throw new InvalidOperationException("Failed to set correlation id");
                 }
+            }
+        }
+
+        public override string ToString()
+        {
+            if (_disposed)
+            {
+                return null;
+            }
+
+            switch (_messageType)
+            {
+                case MessageTypes.ByteArray:
+                    return GetByteArrayAsString();
+                case MessageTypes.String:
+                    return Message;
+                default:
+                    return null;
             }
         }
 
@@ -281,7 +303,9 @@ namespace IoTPInvoke
 
             if (disposing)
             {
-                // Nothing to do here - typically free managed objects
+                // Free up this memory
+                _message = null;
+                _byteMessage = null;
             }
 
             int ret;
