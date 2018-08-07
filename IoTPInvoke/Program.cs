@@ -27,7 +27,7 @@ namespace IoTPInvoke
             //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.AMQP);
             //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.AMQP_WebSocket);
             //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.MQTT);
-            IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.MQTT_WebSocket);
+            IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRING, IoTConnection_LL.Protocols.MQTT_WebSocket);
 
             // Optional - turn on SDK detailed logging with true
             ret = conn.SetLogging(false);
