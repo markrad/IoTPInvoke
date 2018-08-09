@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
+using static IoTPInvoke.IoTHubException;
 using static IoTPInvoke.IoTWrapper;
 
 namespace IoTPInvoke
@@ -24,7 +22,11 @@ namespace IoTPInvoke
         private ReportedStateCallback _reportedStateCallback;
         private DeviceMethodCallback _deviceMethodCallback;
         private DeviceTwinCallback _deviceTwinCallback;
+        private ClientConnectionStatusCallback _clientConnectionStatusCallback;
 
+        /// <summary>
+        /// Protocols that can be used to connect to the Azure IoT Hub
+        /// </summary>
         public enum Protocols
         {
             AMQP,
@@ -34,14 +36,40 @@ namespace IoTPInvoke
             MQTT_WebSocket,
         }
 
-        public const string OPTION_HTTP_PROXY = "proxy_data";
-        public const string OPTION_LOG_TRACE = "logtrace";
+        private const string OPTION_HTTP_PROXY = "proxy_data";
+        private const string OPTION_LOG_TRACE = "logtrace";
+        private const string OPTION_X509_CERT = "x509certificate";
+        private const string OPTION_X509_PRIVATE_KEY = "x509privatekey";
 
+        /// <summary>
+        /// Event raised when a message has been either sent to the hub or an error occurred
+        /// </summary>
         public event EventHandler<ConfirmationCallbackEventArgs> ConfirmationCallback;
+
+        /// <summary>
+        /// Event raised when a message is received from the cloud
+        /// </summary>
         public event EventHandler<MessageCallbackArgs> MessageCallback;
+
+        /// <summary>
+        /// Event raised when a device method call is received from the cloud
+        /// </summary>
         public event EventHandler<DeviceMethodCallbackArgs> DeviceMethodCallback;
+
+        /// <summary>
+        /// Event raised then a device twin update is received from the cloud
+        /// </summary>
         public event EventHandler<DeviceTwinCallbackArgs> DeviceTwinCallback;
+
+        /// <summary>
+        /// Event raised when a device twin message has either been sent to the hub or an error occured
+        /// </summary>
         public event EventHandler<ReportedStateCallbackArgs> ReportedStateCallback;
+
+        /// <summary>
+        /// Event raised when the connection status changes
+        /// </summary>
+        public event EventHandler<ClientConnectionStatusCallbackArgs> ClientConnectionStatusCallback;
 
         /// <summary>
         /// Create an instance of the IoTConnection_LL object
@@ -71,6 +99,7 @@ namespace IoTPInvoke
             _reportedStateCallback = new ReportedStateCallback(reportedStateCallback);
             _deviceMethodCallback = new DeviceMethodCallback(deviceMethodReceived);
             _deviceTwinCallback = new DeviceTwinCallback(deviceTwinCallback);
+            _clientConnectionStatusCallback = new ClientConnectionStatusCallback(clientConnectionStatusCallback);
 
             int ret;
 
@@ -89,8 +118,30 @@ namespace IoTPInvoke
             }
 
             ret = IoTHubClient_LL_SetMessageCallback(_iotHandle, _messageCallback, userContextCallback);
+
+            if (ret != 0)
+            {
+                throw new IoTHubException("Failed to set message callback", ret);
+            }
+
             ret = IoTHubClient_LL_SetDeviceMethodCallback(_iotHandle, _deviceMethodCallback, userContextCallback);
+
+            if (ret != 0)
+            {
+                throw new IoTHubException("Failed to set device method callback", ret);
+            }
             ret = IoTHubClient_LL_SetDeviceTwinCallback(_iotHandle, _deviceTwinCallback, userContextCallback);
+
+            if (ret != 0)
+            {
+                throw new IoTHubException("Failed to set device twin callback", ret);
+            }
+            ret = IoTHubClient_LL_SetConnectionStatusCallback(_iotHandle, clientConnectionStatusCallback, UIntPtr.Zero);
+
+            if (ret != 0)
+            {
+                throw new IoTHubException("Failed to set client connection status callback", ret);
+            }
         }
 
         /// <summary>
@@ -101,7 +152,7 @@ namespace IoTPInvoke
         /// <param name="proxyUserid">Optional proxy user identity</param>
         /// <param name="proxyPassword">Optional proxy password</param>
         /// <returns>Zero if successful</returns>
-        public int SetProxy(string proxyName, int proxyPort, string proxyUserid = null, string proxyPassword = null)
+        public IOTHUB_CLIENT_RESULT SetProxy(string proxyName, int proxyPort, string proxyUserid = null, string proxyPassword = null)
         {
             IsDisposed();
 
@@ -113,7 +164,7 @@ namespace IoTPInvoke
                 password = proxyPassword
             };
 
-            return IoTHubClient_LL_SetOption_Proxy(_iotHandle, OPTION_HTTP_PROXY, ref proxyData);
+            return (IOTHUB_CLIENT_RESULT)IoTHubClient_LL_SetOption_Proxy(_iotHandle, OPTION_HTTP_PROXY, ref proxyData);
         }
 
         /// <summary>
@@ -121,11 +172,33 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="traceValue">True to turn on logging; false to turn off</param>
         /// <returns>Zero if successful</returns>
-        public int SetLogging(bool traceValue)
+        public IOTHUB_CLIENT_RESULT SetLogging(bool traceValue)
         {
             IsDisposed();
 
-            return IoTHubClient_LL_SetOption_Logging(_iotHandle, OPTION_LOG_TRACE, ref traceValue);
+            return (IOTHUB_CLIENT_RESULT)IoTHubClient_LL_SetOption_Logging(_iotHandle, OPTION_LOG_TRACE, ref traceValue);
+        }
+
+        /// <summary>
+        /// Pass certificate and private key for X.509 authentication
+        /// </summary>
+        /// <param name="certificate">The certificate to use</param>
+        /// <param name="privateKey">The corresponding private key</param>
+        /// <returns>IOTHUB_CLIENT_OK if successful</returns>
+        public IOTHUB_CLIENT_RESULT SetCertificateAndKey(string certificate, string privateKey)
+        {
+            IsDisposed();
+
+            IOTHUB_CLIENT_RESULT ret;
+
+            ret = (IOTHUB_CLIENT_RESULT)IoTHubClient_LL_SetOption_X509_Certificate(_iotHandle, OPTION_X509_CERT, certificate);
+
+            if (ret == IOTHUB_CLIENT_RESULT.IOTHUB_CLIENT_OK && privateKey != null)
+            {
+                ret = (IOTHUB_CLIENT_RESULT)IoTHubClient_LL_SetOption_X509_Private_Key(_iotHandle, OPTION_X509_PRIVATE_KEY, privateKey);
+            }
+
+            return ret;
         }
 
         /// <summary>
@@ -133,7 +206,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="message">Message content</param>
         /// <returns>Zero if successful</returns>
-        public int SendEvent(string message)
+        public IOTHUB_CLIENT_RESULT SendEvent(string message)
         {
             return SendEvent(message, UIntPtr.Zero);
         }
@@ -144,9 +217,9 @@ namespace IoTPInvoke
         /// <param name="message">Message content</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns>Zero if successful</returns>
-        public int SendEvent(string message, UIntPtr userContextCallback)
+        public IOTHUB_CLIENT_RESULT SendEvent(string message, UIntPtr userContextCallback)
         {
-            int ret;
+            IOTHUB_CLIENT_RESULT ret;
             IoTMessage iotMessage = new IoTMessage(message);
 
             ret =  SendEvent(iotMessage, userContextCallback);
@@ -160,7 +233,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="message">IoT message wrapper</param>
         /// <returns>Zero if successful</returns>
-        public int SendEvent(IoTMessage message)
+        public IOTHUB_CLIENT_RESULT SendEvent(IoTMessage message)
         {
             return SendEvent(message, UIntPtr.Zero);
         }
@@ -171,11 +244,11 @@ namespace IoTPInvoke
         /// <param name="message">IoT message wrapper</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns>Zero if successful</returns>
-        public int SendEvent(IoTMessage message, UIntPtr userContextCallback)
+        public IOTHUB_CLIENT_RESULT SendEvent(IoTMessage message, UIntPtr userContextCallback)
         {
             IsDisposed();
 
-            return IoTHubClient_LL_SendEventAsync(_iotHandle, message.MessageHandle, _messageConfirmationCallback, userContextCallback);
+            return (IOTHUB_CLIENT_RESULT)IoTHubClient_LL_SendEventAsync(_iotHandle, message.MessageHandle, _messageConfirmationCallback, userContextCallback);
         }
 
         /// <summary>
@@ -183,9 +256,9 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="reportedState">State as JSON string</param>
         /// <returns>Zero if successful</returns>
-        public int SendReportedTwinState(string reportedState)
+        public IOTHUB_CLIENT_RESULT SendReportedTwinState(string reportedState)
         {
-            return SendReportedTwinState(reportedState, UIntPtr.Zero);
+            return (IOTHUB_CLIENT_RESULT)SendReportedTwinState(reportedState, UIntPtr.Zero);
         }
 
         /// <summary>
@@ -194,11 +267,11 @@ namespace IoTPInvoke
         /// <param name="reportedState">State as JSON string</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns>Zero if successful</returns>
-        public int SendReportedTwinState(string reportedState, UIntPtr userContextCallback)
+        public IOTHUB_CLIENT_RESULT SendReportedTwinState(string reportedState, UIntPtr userContextCallback)
         {
             IsDisposed();
 
-            return IoTHubClient_LL_SendReportedState(_iotHandle, reportedState, reportedState.Length, _reportedStateCallback, userContextCallback);
+            return (IOTHUB_CLIENT_RESULT)IoTHubClient_LL_SendReportedState(_iotHandle, reportedState, reportedState.Length, _reportedStateCallback, userContextCallback);
         }
 
         /// <summary>
@@ -216,11 +289,11 @@ namespace IoTPInvoke
         /// Close the connection to the IoT hub
         /// </summary>
         /// <returns>Zero if successful</returns>
-        public int Close()
+        public IOTHUB_CLIENT_RESULT Close()
         {
             IsDisposed();
 
-            int ret = IoTWrapper.IoTHubClient_LL_Destroy(_iotHandle);
+            IOTHUB_CLIENT_RESULT ret = (IOTHUB_CLIENT_RESULT)IoTWrapper.IoTHubClient_LL_Destroy(_iotHandle);
 
             return ret;
         }
@@ -288,6 +361,16 @@ namespace IoTPInvoke
             }
         }
 
+        private void OnClientConnectionStatusCallback(ClientConnectionStatusCallbackArgs e)
+        {
+            EventHandler<ClientConnectionStatusCallbackArgs> handler = ClientConnectionStatusCallback;
+
+            if (handler != null)
+            {
+                handler(this, e);
+            }
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (_disposed)
@@ -301,7 +384,7 @@ namespace IoTPInvoke
             int ret;
 
             // Could check for errors here if we care
-            ret = Close();
+            ret = (int)Close();
             ret = IoTWrapper.platform_deinit();
             _disposed = true;
         }
@@ -337,7 +420,7 @@ namespace IoTPInvoke
             int length = deviceMethodCallbackArgs.Response.Length + 1;
             byte[] work = Encoding.UTF8.GetBytes(deviceMethodCallbackArgs.Response);
 
-
+            // This call to malloc may not be reliable but is forced upon the code by the C SDK
             response = malloc(work.Length);
             Marshal.Copy(work, 0, response, work.Length);
             response_size = work.Length;
@@ -360,6 +443,13 @@ namespace IoTPInvoke
             OnReportedStateCallback(reportedStateCallbackArgs);
         }
 
+        private void clientConnectionStatusCallback(int result, int reason, UIntPtr userContextCallback)
+        {
+            ClientConnectionStatusCallbackArgs connectionStatusCallbackArgs = new ClientConnectionStatusCallbackArgs(result, reason);
+
+            OnClientConnectionStatusCallback(connectionStatusCallbackArgs);
+        }
+
         private Protocol getProtocolFunction(Protocols protocol)
         {
             switch (protocol)
@@ -378,85 +468,5 @@ namespace IoTPInvoke
                     throw new ArgumentException("Invalid protocol", "protocol");
             }
         }
-    }
-
-    public class ReportedStateCallbackArgs : EventArgs
-    {
-        public int StatusCode { get; private set; }
-        public UIntPtr UserContextCallback { get; private set; }
-        public ReportedStateCallbackArgs(int statusCode, UIntPtr userContextCallback)
-        {
-            StatusCode = statusCode;
-            UserContextCallback = userContextCallback;
-        }
-    }
-
-    public class DeviceTwinCallbackArgs : EventArgs
-    {
-        public enum UpdateStateValue
-        {
-            Complete,
-            Partial,
-        }
-
-        public UpdateStateValue UpdateState { get; private set; }
-        public string Payload { get; private set; }
-        public UIntPtr UserContextCallback { get; private set; }
-
-        public DeviceTwinCallbackArgs(int updateState, string payload, UIntPtr userContextCallback)
-        {
-            UpdateState = (UpdateStateValue)updateState;
-            Payload = payload;
-            UserContextCallback = userContextCallback;
-        }
-    }
-
-    public class ConfirmationCallbackEventArgs : EventArgs
-    {
-        public int Result { get; private set; }
-        public UIntPtr UserContextCallback { get; private set; }
-        public ConfirmationCallbackEventArgs(int result, UIntPtr userContextCallback)
-        {
-            Result = result;
-            UserContextCallback = userContextCallback;
-        }
-
-        public override string ToString()
-        {
-            return "result=" + Result;
-        }
-    }
-
-    public class MessageCallbackArgs : EventArgs
-    {
-        public MessageCallbackArgs(IoTMessage message, UIntPtr userContextCallback)
-        {
-            ReceivedMessage = message;
-            UserContextCallback = userContextCallback;
-            Success = true;
-        }
-
-        public IoTMessage ReceivedMessage { get; private set; }
-        public UIntPtr UserContextCallback { get; private set; }
-        public bool Success { get; set; }
-    }
-
-    public class DeviceMethodCallbackArgs : EventArgs
-    {
-        public DeviceMethodCallbackArgs(string method, IntPtr payload, int size, UIntPtr userContextCallback)
-        {
-            byte[] work = new byte[size];
-            Method = method;
-            Marshal.Copy(payload, work, 0, size);
-            Payload = work;
-            Result = 200;
-            Response = "No handler installed";
-        }
-
-        public string Method { get; private set; }
-        public byte[] Payload { get; private set; }
-        public UIntPtr UserContextCallback { get; private set; }
-        public int Result { get; set; }
-        public string Response { get; set; }
     }
 }

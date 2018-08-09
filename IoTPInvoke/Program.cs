@@ -1,23 +1,21 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using static IoTPInvoke.IoTHubException;
 
 namespace IoTPInvoke
 {
     class Program
     {
-        private const string CONNECTIONSTRING = "<Connection String>";
-
+        //private const string CONNECTIONSTRING = "HostName=MarkRadHub2.azure-devices.net;DeviceId=TestDevice1;SharedAccessKey=9lbM21JSkEVal2y/y/NfBldWUMKixrBWz/aj3vCLss8=";
+        private const string CONNECTIONSTRING = "HostName=MarkRadHub2.azure-devices.net;DeviceId=X509SSTest1;x509=true";
         static void Main(string[] args)
         {
-            int ret;
+            IOTHUB_CLIENT_RESULT ret;
             bool quit = false;
             int counter = 0;
 
@@ -31,6 +29,31 @@ namespace IoTPInvoke
 
             // Optional - turn on SDK detailed logging with true
             ret = conn.SetLogging(false);
+
+            // Optional - route via a web proxy
+            //ret = conn.SetProxy("proxyname", 9999, null, null);
+
+            // Required for X.509 authentication
+            string certificate;
+            string privateKey;
+
+            // Certificates can be hardcoded as in this example
+            /*
+                        certificate = string.Join(Environment.NewLine,
+            "-----BEGIN CERTIFICATE-----",
+            "<<< SNIP >>>",
+            "-----END CERTIFICATE-----");
+
+                        privateKey = string.Join(Environment.NewLine,
+            "-----BEGIN RSA PRIVATE KEY-----",
+            "<<< SNIP >>>",
+            "-----END RSA PRIVATE KEY-----");
+            */
+
+            // or certificates can be read from a file for my flexibility
+            certificate = File.ReadAllText(@"C:\Users\markrad\OneDrive\Documents\AzureSamples\Certificates\MarkRadHub2_X509SSTest1_Certs\public1.cer");
+            privateKey = File.ReadAllText(@"C:\Users\markrad\OneDrive\Documents\AzureSamples\Certificates\MarkRadHub2_X509SSTest1_Certs\private1.key");
+            ret = conn.SetCertificateAndKey(certificate, privateKey);
 
             // Callback for message confirmation
             conn.ConfirmationCallback += (o, i) =>
@@ -127,6 +150,11 @@ namespace IoTPInvoke
             conn.ReportedStateCallback += (o, i) =>
             {
                 Console.WriteLine("Twin state callback = {0}", i.StatusCode);
+            };
+
+            conn.ClientConnectionStatusCallback += (o, i) =>
+            {
+                Console.WriteLine(i.ToString());
             };
 
             // Optional - use proxy for WebSockets

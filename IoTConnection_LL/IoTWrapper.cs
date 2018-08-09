@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
 namespace IoTPInvoke
@@ -101,6 +97,12 @@ namespace IoTPInvoke
             int length,
             UIntPtr userContextCallback);
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void ClientConnectionStatusCallback(
+            int result, 
+            int reason, 
+            UIntPtr userContextCallback);
+
         // Next four functions are protocol specifiers. These are not called directly but passed to the SDK
         // to specify the protocol to use.
 
@@ -186,6 +188,32 @@ namespace IoTPInvoke
             ref bool traceValue);
 
         /// <summary>
+        /// Send the X.509 certificate required for authentication of devices without a SAS token
+        /// </summary>
+        /// <param name="iotHubClientHandle">IoT Hub handle</param>
+        /// <param name="optionName">Must be 'x509certificate'</param>
+        /// <param name="certificate">String containing the PEM form of the X.509 certificate</param>
+        /// <returns>Zero if successful</returns>
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
+        public static extern int IoTHubClient_LL_SetOption_X509_Certificate(
+            UIntPtr iotHubClientHandle,
+            [MarshalAs(UnmanagedType.LPStr)] string optionName,
+            [MarshalAs(UnmanagedType.LPStr)] string certificate);
+
+        /// <summary>
+        /// Send the private key that corresponds to the certificate sent with the x509certificate option above
+        /// </summary>
+        /// <param name="iotHubClientHandle">IoT Hub handle</param>
+        /// <param name="optionName">Must be 'x509privatekey</param>
+        /// <param name="privateKey">String containing the PEM form of the private key</param>
+        /// <returns>Zero if successful</returns>
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
+        public static extern int IoTHubClient_LL_SetOption_X509_Private_Key(
+            UIntPtr iotHubClientHandle,
+            [MarshalAs(UnmanagedType.LPStr)] string optionName,
+            [MarshalAs(UnmanagedType.LPStr)] string privateKey);
+
+        /// <summary>
         /// Send a message to the IoT hub
         /// </summary>
         /// <param name="iotHubClientHandle">IoT Hub handle</param>
@@ -255,6 +283,17 @@ namespace IoTPInvoke
             UIntPtr iotHubClientHandle,
             DeviceTwinCallback deviceTwinCallback,
             UIntPtr userContextCallback);
+
+        /// <summary>
+        /// Specifies a function to call when the connection status changes
+        /// </summary>
+        /// <param name="iotHubClientHandle">IoT Hub handle</param>
+        /// <param name="connectionStatusCallback">Function to call</param>
+        /// <param name="userContextCallback">User data</param>
+        /// <returns></returns>
+        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetConnectionStatusCallback")]
+        public static extern int IoTHubClient_LL_SetConnectionStatusCallback(
+            UIntPtr iotHubClientHandle, ClientConnectionStatusCallback connectionStatusCallback, UIntPtr userContextCallback);
 
         /// <summary>
         /// Function needs to be called frequently to drive socket communications

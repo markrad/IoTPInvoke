@@ -41,10 +41,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClientConnectionStatusCallbackArgs.cs" />
+    <Compile Include="ConfirmationCallbackEventArgs.cs" />
+    <Compile Include="DeviceMethodCallbackArgs.cs" />
+    <Compile Include="DeviceTwinCallbackArgs.cs" />
     <Compile Include="IoTConnection_LL.cs" />
+    <Compile Include="IoTHubException.cs" />
     <Compile Include="IoTMessage.cs" />
     <Compile Include="IoTWrapper.cs" />
+    <Compile Include="MessageCallbackArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReportedStateCallbackArgs.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="aziotsharedutil.dll">
