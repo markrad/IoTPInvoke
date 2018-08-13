@@ -40,6 +40,7 @@ namespace IoTPInvoke
         private const string OPTION_LOG_TRACE = "logtrace";
         private const string OPTION_X509_CERT = "x509certificate";
         private const string OPTION_X509_PRIVATE_KEY = "x509privatekey";
+        private const string OPTION_AUTO_URL_ENCODE_DECODE = "auto_url_encode_decode";
 
         /// <summary>
         /// Event raised when a message has been either sent to the hub or an error occurred
@@ -199,6 +200,21 @@ namespace IoTPInvoke
             }
 
             return ret;
+        }
+
+        /// <summary>
+        /// Turn URL Encoding and Decoding on or off
+        /// </summary>
+        /// <remarks>
+        /// This is only required for MQTT connections
+        /// </remarks>
+        /// <param name="urlEncodeDecodeValue">True to turn on encoding and decoding; false to turn off</param>
+        /// <returns>Zero if successful</returns>
+        public IOTHUB_CLIENT_RESULT SetUrlEncodeDecode(bool urlEncodeDecodeValue)
+        {
+            IsDisposed();
+
+            return (IOTHUB_CLIENT_RESULT)IoTHubClient_LL_SetOption_URL_Encode_Decode(_iotHandle, OPTION_AUTO_URL_ENCODE_DECODE, ref urlEncodeDecodeValue);
         }
 
         /// <summary>

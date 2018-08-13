@@ -11,7 +11,7 @@ namespace IoTPInvoke
 {
     class Program
     {
-        //private const string CONNECTIONSTRING = "HostName=MarkRadHub2.azure-devices.net;DeviceId=TestDevice1;SharedAccessKey=9lbM21JSkEVal2y/y/NfBldWUMKixrBWz/aj3vCLss8=";
+        //private const string CONNECTIONSTRING = "<Connection String>";
         private const string CONNECTIONSTRING = "HostName=MarkRadHub2.azure-devices.net;DeviceId=X509SSTest1;x509=true";
         static void Main(string[] args)
         {
@@ -22,16 +22,24 @@ namespace IoTPInvoke
             // Create my reported device twin
             JObject twin = null;
 
-            //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.AMQP);
-            //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.AMQP_WebSocket);
-            //IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRRING, IoTConnection_LL.Protocols.MQTT);
-            IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRING, IoTConnection_LL.Protocols.MQTT_WebSocket);
+            //IoTConnection_LL.Protocols protocol = IoTConnection_LL.Protocols.AMQP;
+            //IoTConnection_LL.Protocols protocol = IoTConnection_LL.Protocols.AMQP_WebSocket;
+            //IoTConnection_LL.Protocols protocol = IoTConnection_LL.Protocols.MQTT;
+            IoTConnection_LL.Protocols protocol = IoTConnection_LL.Protocols.MQTT_WebSocket;
+
+            IoTConnection_LL conn = new IoTConnection_LL(CONNECTIONSTRING, protocol);
 
             // Optional - turn on SDK detailed logging with true
             ret = conn.SetLogging(false);
 
             // Optional - route via a web proxy
             //ret = conn.SetProxy("proxyname", 9999, null, null);
+
+            // For MQTT use URL encode and decode
+            if (protocol ==  IoTConnection_LL.Protocols.MQTT || protocol == IoTConnection_LL.Protocols.MQTT_WebSocket)
+            {
+                ret = conn.SetUrlEncodeDecode(true);
+            }
 
             // Required for X.509 authentication
             string certificate;
@@ -168,11 +176,14 @@ namespace IoTPInvoke
             };
 
             int messageNumber = 0;
+            bool flipflop = true;
 
             while (!quit)
             {
                 if (counter++ % 200 == 0)
                 {
+                    flipflop ^= true;
+
                     IoTMessage message = new IoTMessage("Message at : " + counter.ToString());
 
                     message["Number"] = messageNumber++.ToString();
@@ -180,7 +191,11 @@ namespace IoTPInvoke
                     Debug.Assert(message["Number"] == (messageNumber - 1).ToString());
                     Debug.Assert(message["novalue"] == null);
 
-                    message["Name"] = "Mark";
+                    message["Name"] = flipflop
+//                        ? Uri.EscapeDataString("Mark+Radbourne")
+                        ? "Mark+Radbourne"
+                        : "MarkRadbourne";
+                    Console.WriteLine("Name=" + message["Name"]);
                     string[] keys = message.GetPropertyKeys();
 
                     Debug.Assert(keys.Length == 2 && keys.Contains("Number") && keys.Contains("Name"));

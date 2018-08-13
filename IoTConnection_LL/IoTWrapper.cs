@@ -8,6 +8,9 @@ namespace IoTPInvoke
     /// </summary>
     class IoTWrapper
     {
+        private const string AZIOTSHAREDUTIL_DLL = "aziotsharedutil.dll";
+        private const string IOTHUBCLIENT_DLL = "iothub_client_dll.dll";
+
         /// <summary>
         /// This is a hack. It is likely not portable between different versions of Windows. It calls the C
         /// runtime library malloc function since the SDK requires the client to malloc a buffer to return
@@ -106,33 +109,33 @@ namespace IoTPInvoke
         // Next four functions are protocol specifiers. These are not called directly but passed to the SDK
         // to specify the protocol to use.
 
-        [DllImport("iothub_client_dll.dll")]
+        [DllImport(IOTHUBCLIENT_DLL)]
         public static extern UIntPtr AMQP_Protocol();
 
-        [DllImport("iothub_client_dll.dll")]
+        [DllImport(IOTHUBCLIENT_DLL)]
         public static extern UIntPtr AMQP_Protocol_over_WebSocketsTls();
 
-        [DllImport("iothub_client_dll.dll")]
+        [DllImport(IOTHUBCLIENT_DLL)]
         public static extern UIntPtr HTTP_Protocol();
 
-        [DllImport("iothub_client_dll.dll")]
+        [DllImport(IOTHUBCLIENT_DLL)]
         public static extern UIntPtr MQTT_Protocol();
 
-        [DllImport("iothub_client_dll.dll")]
+        [DllImport(IOTHUBCLIENT_DLL)]
         public static extern UIntPtr MQTT_WebSocket_Protocol();
 
         /// <summary>
         /// Initialize the platform
         /// </summary>
         /// <returns></returns>
-        [DllImport("aziotsharedutil.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(AZIOTSHAREDUTIL_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int platform_init();
 
         /// <summary>
         /// Deinitialize the platform
         /// </summary>
         /// <returns></returns>
-        [DllImport("aziotsharedutil.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(AZIOTSHAREDUTIL_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int platform_deinit();
 
         /// <summary>
@@ -143,7 +146,7 @@ namespace IoTPInvoke
         /// <param name="values">Output parameter will address an array of strings containing values</param>
         /// <param name="count">Output parameter that specifies how many keys are in the MAP</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("aziotsharedutil.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(AZIOTSHAREDUTIL_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int Map_GetInternals(
             UIntPtr handle,
             out IntPtr keys,
@@ -156,7 +159,7 @@ namespace IoTPInvoke
         /// <param name="connectionString">Device connection string</param>
         /// <param name="protocol">Protocol function</param>
         /// <returns>IoT Hub handle</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern UIntPtr IoTHubClient_LL_CreateFromConnectionString(
             [MarshalAs(UnmanagedType.LPStr)] string connectionString, 
             Protocol protocol);
@@ -168,7 +171,7 @@ namespace IoTPInvoke
         /// <param name="optionName">Must be 'proxy_data'</param>
         /// <param name="proxyData">Pointer to proxy structure (ProxyData)</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
         public static extern int IoTHubClient_LL_SetOption_Proxy(
             UIntPtr iotHubClientHandle,
             [MarshalAs(UnmanagedType.LPStr)] string optionName,
@@ -181,7 +184,7 @@ namespace IoTPInvoke
         /// <param name="optionName">Must be 'logtrace'</param>
         /// <param name="traceValue">True to turn on logging</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
         public static extern int IoTHubClient_LL_SetOption_Logging(
             UIntPtr iotHubClientHandle,
             [MarshalAs(UnmanagedType.LPStr)] string optionName,
@@ -194,7 +197,7 @@ namespace IoTPInvoke
         /// <param name="optionName">Must be 'x509certificate'</param>
         /// <param name="certificate">String containing the PEM form of the X.509 certificate</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
         public static extern int IoTHubClient_LL_SetOption_X509_Certificate(
             UIntPtr iotHubClientHandle,
             [MarshalAs(UnmanagedType.LPStr)] string optionName,
@@ -204,14 +207,30 @@ namespace IoTPInvoke
         /// Send the private key that corresponds to the certificate sent with the x509certificate option above
         /// </summary>
         /// <param name="iotHubClientHandle">IoT Hub handle</param>
-        /// <param name="optionName">Must be 'x509privatekey</param>
+        /// <param name="optionName">Must be 'x509privatekey'</param>
         /// <param name="privateKey">String containing the PEM form of the private key</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
         public static extern int IoTHubClient_LL_SetOption_X509_Private_Key(
             UIntPtr iotHubClientHandle,
             [MarshalAs(UnmanagedType.LPStr)] string optionName,
             [MarshalAs(UnmanagedType.LPStr)] string privateKey);
+
+        /// <summary>
+        /// Turn URL encoding and decoding on or off
+        /// </summary>
+        /// <remarks>
+        /// This option is only required for MQTT connections
+        /// </remarks>
+        /// <param name="iotHubClientHandle">IoT Hub handle</param>
+        /// <param name="optionName">Must be 'auto_url_encode_decode'</param>
+        /// <param name="urlEncodeDecodeValue">True to turn on URL encoding and decoding</param>
+        /// <returns>Zero if successful</returns>
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubClient_LL_SetOption")]
+        public static extern int IoTHubClient_LL_SetOption_URL_Encode_Decode(
+            UIntPtr iotHubClientHandle,
+            [MarshalAs(UnmanagedType.LPStr)] string optionName,
+            ref bool urlEncodeDecodeValue);
 
         /// <summary>
         /// Send a message to the IoT hub
@@ -221,7 +240,7 @@ namespace IoTPInvoke
         /// <param name="eventConfirmationCallback">Callback function</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns></returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubClient_LL_SendEventAsync(
             UIntPtr iotHubClientHandle,
             UIntPtr eventMessageHandle,
@@ -237,7 +256,7 @@ namespace IoTPInvoke
         /// <param name="reportedStateCallback">Callback called to report update status</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns></returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SendReportedState")]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SendReportedState")]
         public static extern int IoTHubClient_LL_SendReportedState(
             UIntPtr iotHubClientHandle,
             [MarshalAs(UnmanagedType.LPStr)] string reportedState,
@@ -252,7 +271,7 @@ namespace IoTPInvoke
         /// <param name="messageCallback">Function to call</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns></returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubClient_LL_SetMessageCallback(
             UIntPtr iotHubClientHandle, 
             MessageCallback messageCallback, 
@@ -265,7 +284,7 @@ namespace IoTPInvoke
         /// <param name="deviceMethodCallback">Function to call</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns></returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetDeviceMethodCallback")]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetDeviceMethodCallback")]
         public static extern int IoTHubClient_LL_SetDeviceMethodCallback(
             UIntPtr iotHubClientHandle, 
             DeviceMethodCallback deviceMethodCallback, 
@@ -278,7 +297,7 @@ namespace IoTPInvoke
         /// <param name="deviceTwinCallback">Function to call</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns></returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetDeviceTwinCallback")]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetDeviceTwinCallback")]
         public static extern int IoTHubClient_LL_SetDeviceTwinCallback(
             UIntPtr iotHubClientHandle,
             DeviceTwinCallback deviceTwinCallback,
@@ -291,7 +310,7 @@ namespace IoTPInvoke
         /// <param name="connectionStatusCallback">Function to call</param>
         /// <param name="userContextCallback">User data</param>
         /// <returns></returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetConnectionStatusCallback")]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "IoTHubDeviceClient_LL_SetConnectionStatusCallback")]
         public static extern int IoTHubClient_LL_SetConnectionStatusCallback(
             UIntPtr iotHubClientHandle, ClientConnectionStatusCallback connectionStatusCallback, UIntPtr userContextCallback);
 
@@ -299,7 +318,7 @@ namespace IoTPInvoke
         /// Function needs to be called frequently to drive socket communications
         /// </summary>
         /// <param name="iotHubClientHandle">IoT Hub handle</param>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void IoTHubClient_LL_DoWork(
             UIntPtr iotHubClientHandle);
 
@@ -308,7 +327,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="iotHubClientHandle">IoT Hub handle</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubClient_LL_Destroy(
             UIntPtr iotHubClientHandle);
 
@@ -317,7 +336,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="source">Data to send</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern UIntPtr IoTHubMessage_CreateFromString(
             [MarshalAs(UnmanagedType.LPStr)] string source);
 
@@ -326,7 +345,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="iotHubMessageHandle">Message handle</param>
         /// <returns>String, Byte Array or Unknown</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_GetContentType(
             UIntPtr iotHubMessageHandle);
 
@@ -335,7 +354,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="iotHubMessageHandle"></param>
         /// <returns>String data</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetString(
             UIntPtr iotHubMessageHandle);
 
@@ -346,7 +365,7 @@ namespace IoTPInvoke
         /// <param name="buffer">Output buffer</param>
         /// <param name="size">Output size of buffer</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_GetByteArray(
             UIntPtr iotHubMessageHandle, 
             out IntPtr buffer, 
@@ -357,7 +376,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="messageHandle">Handle to message to clone</param>
         /// <returns>Handle to copy of IoT message</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern UIntPtr IoTHubMessage_Clone(
             UIntPtr messageHandle);
 
@@ -367,7 +386,7 @@ namespace IoTPInvoke
         /// <param name="messageHandle">Handle to the message</param>
         /// <returns>MAP handle of properties or NULL if failed</returns>
         /// <remarks>Currently the MAP functions have not been exposed so the MAP handle is useless - WIP</remarks> 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern UIntPtr IoTHubMessage_Properties(
             UIntPtr messageHandle);
 
@@ -378,7 +397,7 @@ namespace IoTPInvoke
         /// <param name="key">The key of which to set or reset the value</param>
         /// <param name="value">The new value</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_SetProperty(
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string key,
@@ -390,7 +409,7 @@ namespace IoTPInvoke
         /// <param name="messageHandle">Handle to message</param>
         /// <param name="key">Key name</param>
         /// <returns>String pointer</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetProperty(
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string key);
@@ -400,7 +419,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="messageHandle">Message handle</param>
         /// <returns>IntPtr pointing to string</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetMessageId(
             UIntPtr messageHandle);
 
@@ -410,7 +429,7 @@ namespace IoTPInvoke
         /// <param name="messageHandle">Message handle</param>
         /// <param name="messageId">Message id</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_SetMessageId(
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string messageId);
@@ -420,7 +439,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="messageHandle">Message handle</param>
         /// <returns>Correlation id</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetCorrelationId(
             UIntPtr messageHandle);
 
@@ -430,43 +449,43 @@ namespace IoTPInvoke
         /// <param name="messageHandle">Message handle</param>
         /// <param name="correlationId">Required correlation id</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_SetCorrelationId(
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string correlationId);
 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetOutputName(
             UIntPtr messageHandle);
 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_SetOutputName(
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string outputName);
 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetInputName(
             UIntPtr messageHandle);
 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_SetInputName(
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string inputName);
 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetConnectionModuleId(
             UIntPtr messageHandle);
 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_SetConnectionModuleId(
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string connectionModuleId);
 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr IoTHubMessage_GetConnectionDeviceId(
             UIntPtr messageHandle);
 
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_SetConnectionDeviceId(
             UIntPtr messageHandle,
             [MarshalAs(UnmanagedType.LPStr)] string connectionDeviceId);
@@ -476,7 +495,7 @@ namespace IoTPInvoke
         /// </summary>
         /// <param name="iotHubMessageHandle">Message handle</param>
         /// <returns>Zero if successful</returns>
-        [DllImport("iothub_client_dll.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(IOTHUBCLIENT_DLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int IoTHubMessage_Destroy(UIntPtr iotHubMessageHandle);
     }
 }
