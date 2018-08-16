@@ -58,7 +58,7 @@ namespace IoTPInvoke
             "-----END RSA PRIVATE KEY-----");
             */
 
-            // or certificates can be read from a file for my flexibility
+            // or certificates can be read from a file for flexibility
             certificate = File.ReadAllText(@"C:\Users\markrad\OneDrive\Documents\AzureSamples\Certificates\MarkRadHub2_X509SSTest1_Certs\public1.cer");
             privateKey = File.ReadAllText(@"C:\Users\markrad\OneDrive\Documents\AzureSamples\Certificates\MarkRadHub2_X509SSTest1_Certs\private1.key");
             ret = conn.SetCertificateAndKey(certificate, privateKey);

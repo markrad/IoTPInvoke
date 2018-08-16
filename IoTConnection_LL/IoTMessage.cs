@@ -28,6 +28,10 @@ namespace IoTPInvoke
         private bool _disposed;
         private bool _owned;
 
+        /// <summary>
+        /// Construct a new IoT message from a string
+        /// </summary>
+        /// <param name="message">Message content</param>
         public IoTMessage(string message)
         {
             _message = message;
@@ -37,6 +41,10 @@ namespace IoTPInvoke
             _owned = true;
         }
 
+        /// <summary>
+        /// Construct an instance of this class from an existing IoT message handle
+        /// </summary>
+        /// <param name="messageHandle">Message handle</param>
         public IoTMessage(UIntPtr messageHandle)
         {
             _messageHandle = messageHandle;
@@ -76,6 +84,13 @@ namespace IoTPInvoke
             }
         }
 
+        /// <summary>
+        /// Clone the message
+        /// </summary>
+        /// <remarks>
+        /// The new instance will destory the message handle when disposed
+        /// </remarks>
+        /// <returns>New instance of IoTMessage for clone</returns>
         public IoTMessage Clone()
         {
             IsDisposed();
@@ -86,9 +101,30 @@ namespace IoTPInvoke
                 throw new InvalidOperationException("Failed to clone IoT message");
             }
 
+            IoTMessage ret = new IoTMessage(clone);
+
+            // Since the new message handle is completely invisible to the client
+            // set this to owned so it is released when the instance is destroyed
+            ret.Owned = true;
+
             return new IoTMessage(clone);
         }
 
+        /// <summary>
+        /// Gets and sets the owned flag - true for instances created from a string and typically false for instances created from a handle. <see cref="Clone()"/> for exception.
+        /// </summary>
+        protected bool Owned
+        {
+            get { return _owned; }
+            set { _owned = value; }
+        }
+
+        /// <summary>
+        /// Gets the message string if the instance is a string type otherwise null. Message can only be set prior to creating the handle
+        /// </summary>
+        /// <remarks>
+        /// The message handle is created when MessageHandle is first referenced or if the class was constructed with a message handle
+        /// </remarks>
         public string Message
         {
             get
@@ -100,10 +136,19 @@ namespace IoTPInvoke
             set
             {
                 IsDisposed();
+
+                if (MessageHandle != UIntPtr.Zero)
+                {
+                    throw new InvalidOperationException("Message cannot be modified after the handle has been created");
+                }
+
                 _message = value;
             }
         }
 
+        /// <summary>
+        /// Get the content of the message as a byte array
+        /// </summary>
         public byte[] ByteMessage
         {
             get
@@ -121,6 +166,10 @@ namespace IoTPInvoke
             }
         }
 
+        /// <summary>
+        /// Helper function that will attempt to return a ByteArray message as a string
+        /// </summary>
+        /// <returns>Message as byte array unless the message type is unknown</returns>
         public string GetByteArrayAsString()
         {
             switch (_messageType)
@@ -134,6 +183,10 @@ namespace IoTPInvoke
             }
         }
 
+        /// <summary>
+        /// Gets all of the message property keys
+        /// </summary>
+        /// <returns>Returns an array of strings representing the keys in the message properties</returns>
         public string[] GetPropertyKeys()
         {
             IsDisposed();
@@ -162,6 +215,9 @@ namespace IoTPInvoke
             return keyList.ToArray();
         }
 
+        /// <summary>
+        /// Get the message handle. If the message has not yet been created then it will be by this function.
+        /// </summary>
         public UIntPtr MessageHandle
         {
             get
@@ -182,6 +238,9 @@ namespace IoTPInvoke
             }
         }
 
+        /// <summary>
+        /// Get the message type
+        /// </summary>
         public MessageTypes MessageType
         {
             get
@@ -191,6 +250,11 @@ namespace IoTPInvoke
             }
         }
 
+        /// <summary>
+        /// Get or set a message property
+        /// </summary>
+        /// <param name="key">The name of the property - can be a new key</param>
+        /// <returns>The value of the message property when using get</returns>
         public string this[string key]
         {
             get
@@ -262,24 +326,25 @@ namespace IoTPInvoke
             }
         }
 
+        /// <summary>
+        /// Override to get the message when ToString is called
+        /// </summary>
+        /// <returns>Message as a string or null if the type is unknown</returns>
         public override string ToString()
         {
             if (_disposed)
             {
                 return null;
             }
-
-            switch (_messageType)
+            else
             {
-                case MessageTypes.ByteArray:
-                    return GetByteArrayAsString();
-                case MessageTypes.String:
-                    return Message;
-                default:
-                    return null;
+                return GetByteArrayAsString();
             }
         }
 
+        /// <summary>
+        /// Clean up resources ready for garbage collection
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
@@ -318,6 +383,9 @@ namespace IoTPInvoke
             }
         }
 
+        /// <summary>
+        /// Destructor - clean up resources
+        /// </summary>
         ~IoTMessage()
         {
             Dispose(false);
