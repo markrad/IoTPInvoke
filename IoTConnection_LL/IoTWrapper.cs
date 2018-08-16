@@ -8,7 +8,7 @@ namespace IoTPInvoke
     /// </summary>
     class IoTWrapper
     {
-        private const string AZIOTSHAREDUTIL_DLL = "aziotsharedutil.dll";
+        private const string AZIOTSHAREDUTIL_DLL = "aziotsharedutil_dll.dll";
         private const string IOTHUBCLIENT_DLL = "iothub_client_dll.dll";
 
         /// <summary>

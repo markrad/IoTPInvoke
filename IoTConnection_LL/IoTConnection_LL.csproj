@@ -54,7 +54,7 @@
     <Compile Include="ReportedStateCallbackArgs.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="aziotsharedutil.dll">
+    <Content Include="aziotsharedutil_dll.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="iothub_client_dll.dll">
